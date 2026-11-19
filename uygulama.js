@@ -39,8 +39,10 @@
     });
   }
   const OPENITI = window.OPENITI || {};
-  const GELISMELER = window.GELISMELER || {};
-  const DERLEME_NOTU = 'Atlastaki biyografilerden derlenmiştir, ayrıca kaynakla kontrol edilmemiştir.';
+  // Bölge ve asır metinleri (veri/bolge-metinleri.js): her metin { m: 'metin', k: ['dia:slug|Başlık', 'alim:id', ...] }
+  const BM = window.BOLGE_METIN || {};
+  const gelisme = (b, n) => ((BM.gelisme || {})[b] || {})[n];
+  const metinAl = (x) => (x == null ? null : typeof x === 'string' ? { m: x, k: [] } : x);
   const hatalar = [];
   const kenarlar = [];
   for (const a of alimler) {
@@ -70,6 +72,48 @@
       if (h.yon === 'talebe') for (const t of h.t) bagEkle(t, { k: id, kaynak: ilkKaynak(id) });
       else bagEkle(id, { kaynak: ilkKaynak(id), ...h });
     }
+  }
+  // DİA "ilişkili maddeler" sayfasındaki Hocası / Öğrencisi kayıtları.
+  // Karşı taraf atlasta varsa bağ olarak eklenir (kaynak: ilişkinin geçtiği DİA maddesi), yoksa dış liste olarak gösterilir.
+  const diaKaynak = (id) => (KAYNAKLAR[id] || []).find((k) => k.url && k.url.includes('islamansiklopedisi'));
+  const slugAlim = new Map();
+  for (const [id, liste] of Object.entries(window.KAYNAK_HAM || {})) for (const k of liste) if (k[0] === 'dia') slugAlim.set(k[1], id);
+  const disHoca = new Map(), disTalebe = new Map();
+  const disEkle = (m, id, kayit) => { if (!m.has(id)) m.set(id, []); if (!m.get(id).some((x) => x.slug === kayit.slug)) m.get(id).push(kayit); };
+  // DİA'da maddesi olup KAYNAK_HAM'da DİA kaydı bulunmayan atlas âlimleri
+  for (const [slug, id] of [['ismaili', 'ismaili'], ['baci', 'baci'], ['ebu-abdurrahman-es-sulemi', 'sulemi']]) slugAlim.set(slug, id);
+  // DİA'nın ilişki etiketleri otomatik üretildiği için bazen ters düşer (ör. talebe "Hocası" diye etiketlenir).
+  // Bu yüzden hoca talebeden önce vefat etmemişse ilişki alınmaz.
+  const diaElenen = [];
+  for (const [id, liste] of Object.entries(window.DIA_ILISKI || {})) {
+    if (!alim.has(id)) continue;
+    const ben = alim.get(id).v;
+    for (const [slug, yon, ad, tanitim, v] of liste) {
+      const karsi = slugAlim.get(slug);
+      if (karsi === id) continue;
+      const kv = karsi ? alim.get(karsi).v : v;
+      if (kv && (yon === 'h' ? kv >= ben : kv <= ben)) { diaElenen.push(`${id} ${yon} ${slug} (${kv})`); continue; }
+      if (karsi) {
+        const [h, t] = yon === 'h' ? [karsi, id] : [id, karsi];
+        bagEkle(t, { k: h, kaynak: diaKaynak(id) });
+      } else disEkle(yon === 'h' ? disHoca : disTalebe, id, { slug, ad, tanitim, v, kaynak: diaKaynak(id) });
+    }
+  }
+  if (diaElenen.length) console.info('Tarihle uyuşmadığı için alınmayan DİA ilişkileri:\n' + diaElenen.join('\n'));
+  // Kaynağı ayrıca kontrol edilerek bulunmuş bağlar (veri/bag-kaynaklari.js)
+  const KAYNAK_SECICI = {
+    dia: (k) => k.url && k.url.includes('islamansiklopedisi'),
+    suy: (k) => k.url && k.url.includes('/book/5823/'),
+    siyer: (k) => k.url && k.url.includes('/book/10906/'),
+    durer: (k) => k.url && k.url.includes('/book/6674/'),
+  };
+  for (const [anahtar, deger] of Object.entries(window.BAG_KAYNAK || {})) {
+    const [h, t] = anahtar.split('>');
+    const [tur, kim] = deger.split(':');
+    const kaynak = (KAYNAKLAR[kim] || []).find(KAYNAK_SECICI[tur]);
+    const bag = alim.get(t)?.hocalar.find((x) => x.k === h);
+    if (bag && kaynak && !bag.kaynak) bag.kaynak = kaynak;
+    else if (!bag || !kaynak) hatalar.push(`bag-kaynaklari.js: ${anahtar} (${deger}) eşleşmedi`);
   }
   for (const a of alimler) {
     if (!bolge.has(a.b)) hatalar.push(`${a.id}: "${a.b}" diye bir bölge yok`);
@@ -129,6 +173,17 @@
     return liste.length ? `<span class="p-kaynak">Kaynak: ${liste.map(kaynakYaz).join('; ')}</span>` : '';
   }
   const kaynakliParagraflar = (a, p) => p.map(([metin, an]) => `<p>${esc(metin)} ${paragrafKaynaklari(a, an)}</p>`).join('');
+  /** Bölge/asır metninin kaynak satırı: DİA maddeleri bağlantıyla, atlas âlimleri kendi sayfalarına bağlanır. */
+  function metinKaynagi(k) {
+    if (!k || !k.length) return '';
+    const dia = k.filter((x) => x.startsWith('dia:')).map((x) => { const [slug, ad] = x.slice(4).split('|'); return `<a href="https://islamansiklopedisi.org.tr/${esc(slug)}" target="_blank" rel="noopener">TDV İA, "${esc(ad)}"</a>`; });
+    const al = k.filter((x) => x.startsWith('alim:')).map((x) => x.slice(5)).filter((id) => alim.has(id)).map((id) => `<a href="#/alim/${id}">${esc(alim.get(id).isim)}</a>`);
+    const parca = [];
+    if (dia.length) parca.push(dia.join('; '));
+    if (al.length) parca.push(`kaynaklı biyografiler: ${al.join(', ')}`);
+    return `<span class="p-kaynak">Kaynak: ${parca.join('; ')}</span>`;
+  }
+  const metinHtml = (x, sinif = '') => { const t = metinAl(x); return t ? `<p class="${sinif}">${esc(t.m)} ${metinKaynagi(t.k)}</p>` : ''; };
   const kaynakYaz = (k) => (k ? (k.url ? `<a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(k.ad)}</a>` : esc(k.ad)) : '');
   const koyuMu = () => {
     const t = document.documentElement.dataset.theme;
@@ -216,24 +271,24 @@
   const ZINCIRLER = {
     buhari: {
       ad: 'Sahîh-i Buhârî',
-      aciklama: "Bugün okunan Buhârî nüshalarının ana kaynağı Firebrî rivayetinin, İbn Hacer'in Fethu'l-Bârî'de verdiği isnadla altı asır boyunca elden ele geçişi.",
+      aciklama: "Sahîh-i Buhârî'nin Firebrî rivayeti: Hammûye eseri Firebrî'den, Dâvûdî Hammûye'den, Ebü'l-Vakt Dâvûdî'den dinledi; rivayet İbnü'z-Zebîdî, Haccâr ve Tenûhî üzerinden İbn Hacer'e ulaştı.",
       halkalar: ['firebri', 'hammuye', 'davudi', 'ebul-vakt', 'ibnuz-zebidi', 'haccar', 'tenuhi', 'ibn-hacer'],
     },
     muslim: {
       ad: 'Sahîh-i Müslim',
-      aciklama: "Müslim'in Sahîh'inin İbn Süfyân rivayeti: Nîşâbur'da dört kuşak boyunca korunup İbnü's-Salâh ile Şam'a taşınması.",
+      aciklama: "Sahîh-i Müslim'in İbn Süfyân rivayeti: Cülûdî eseri İbn Süfyân'dan, Abdülgāfir el-Fârisî Cülûdî'den, Fürâvî Abdülgāfir'den, Müeyyed et-Tûsî Fürâvî'den dinledi; İbnü's-Salâh da Müeyyed et-Tûsî'den dinledi.",
       halkalar: ['ibn-sufyan', 'culudi', 'abdulgafir', 'furavi', 'muayyed-tusi', 'ibnus-salah'],
     },
     zehebi: {
       ad: 'Zehebî halkası',
-      aciklama: "Dımaşk'tan Kahire'ye: Dimyâtî'den Zehebî ve İbn Râfi' üzerinden Irâkī'ye ve İbn Hacer'e uzanan 8.–9. asır hâfızlar halkası.",
+      aciklama: "Münzirî'den Dimyâtî'ye, ondan Mizzî'ye; Mizzî'nin talebesi Zehebî'den İbn Râfi'e, İbn Râfi'den Irâkī'ye, Irâkī'den İbn Hacer'e ve İbn Hacer'den Sehâvî'ye uzanan hâfızlar halkası.",
       halkalar: ['munziri', 'dimyati', 'mizzi', 'zehebi', 'ibn-rafi', 'iraki', 'ibn-hacer', 'sehavi'],
     },
   };
 
   function zincirHtml(anahtar) {
     const z = ZINCIRLER[anahtar];
-    return `<p>${esc(z.aciklama)}</p><ol class="zincir">${z.halkalar
+    return `<p>${esc(z.aciklama)} <span class="p-kaynak">Her halkanın hoca-talebe bağı, ilgili âlimin sayfasında kaynağıyla gösterilir.</span></p><ol class="zincir">${z.halkalar
       .map((id) => {
         const a = alim.get(id);
         return `<li><a href="#/alim/${a.id}">${esc(a.isim)}</a><span class="alt-satir">${tarih(a)} · ${esc(bolge.get(a.b).isim)}</span></li>`;
@@ -395,6 +450,20 @@
       .join('')}</ul>`;
   }
 
+  /** Atlasta bulunmayan hoca / talebeler: DİA maddesi varsa ona, yoksa Şâmile'deki kaynağa bağlanır; hiçbiri yoksa düz yazılır. */
+  function disListe(liste, yon) {
+    if (!liste || !liste.length) return '';
+    const kaynaklar = [...new Set(liste.map((x) => x.kaynak).filter(Boolean))];
+    return `<h4 class="dis-baslik">Atlasta bulunmayan ${yon === 'hoca' ? 'hocaları' : 'talebeleri'}</h4>
+      <ul class="dis-liste">${liste.map((x) => {
+        const ad = esc(baslikDuzelt(x.ad));
+        const link = x.slug ? `<a href="https://islamansiklopedisi.org.tr/${esc(x.slug)}" target="_blank" rel="noopener" title="TDV İslâm Ansiklopedisi maddesi">${ad}</a>`
+          : x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" title="Şâmile'deki kaynak">${ad}</a>` : ad;
+        return `<li>${link}${x.v ? ` <span class="soluk">(ö. ${x.v})</span>` : ''}${x.tanitim ? ` <span class="soluk">${esc(x.tanitim)}</span>` : ''}</li>`;
+      }).join('')}</ul>
+      <p class="kaynak">Kaynak: ${kaynaklar.map(kaynakYaz).join('; ')} (ilişkili maddeler). Bağlantılar kişinin DİA maddesini açar; bu kişiler atlasta bulunmuyor.</p>`;
+  }
+
   function silsileHtml(id, yon) {
     const d = dereceler(id, yon);
     if (!d.length) return '<p class="bos">Bu yönde bağlantı yok.</p>';
@@ -426,6 +495,7 @@
             <a href="#/alim/${a.id}" data-bolum="ozet">${a.bioP || a.bio ? 'Hayatı' : 'Özet'}</a>
             ${a.eser.length ? `<a href="#/alim/${a.id}" data-bolum="eserleri">Eserleri</a>` : ''}
             ${(OPENITI[a.id] || []).length ? `<a href="#/alim/${a.id}" data-bolum="openiti">OpenITI'de</a>` : ''}
+            ${((window.SAMILE || {})[a.id]?.k || []).length ? `<a href="#/alim/${a.id}" data-bolum="samile">Şâmile'de</a>` : ''}
             <a href="#/alim/${a.id}" data-bolum="baglar">Hoca ve talebeleri</a>
             <a href="#/alim/${a.id}" data-bolum="ag-bolum">Küçük ağ</a>
             <a href="#/alim/${a.id}" data-bolum="silsile">İlim silsilesi</a>
@@ -447,11 +517,11 @@
           ${a.farkNotu ? `<p class="uyari-serit" style="margin-top:12px">Kaynaklar arası fark: ${esc(a.farkNotu)}</p>` : ''}
           ${a.eser.length ? `<h2 id="eserleri">Başlıca eserleri</h2><ul class="eserler">${a.eser.map((e) => `<li><i>${esc(e)}</i></li>`).join('')}</ul><p class="kaynaksiz-not">Bu liste tek tek kaynakla eşleştirilmedi; eserlerin bir kısmı yukarıdaki kaynaklı paragraflarda geçer. OpenITI listesi ise doğrudan OpenITI kayıtlarından gelir.</p>` : ''}
           ${openitiBolumu(a)}
+          ${samileBolumu(a)}
           <h2 id="baglar">Hoca ve talebeleri</h2>
-          <p class="soluk" style="font-size:.88rem;margin-top:-6px">Yalnızca bu atlasta kaydı bulunan âlimler gösterilir.</p>
           <div class="iki-sutun">
-            <div><h3>Hocaları</h3>${bagListesi(hocaK, 'hoca')}</div>
-            <div><h3>Talebeleri</h3>${bagListesi(talebeK, 'talebe')}</div>
+            <div><h3>Hocaları</h3>${bagListesi(hocaK, 'hoca')}${disListe(disHoca.get(a.id), 'hoca')}</div>
+            <div><h3>Talebeleri</h3>${bagListesi(talebeK, 'talebe')}${disListe(disTalebe.get(a.id), 'talebe')}</div>
           </div>
           <h2 id="ag-bolum">Küçük ağ</h2>
           <p class="soluk" style="font-size:.88rem;margin-top:-6px">Üstte hocaları, altta talebeleri. Bir isme tıklayınca o âlimin sayfası açılır.</p>
@@ -488,21 +558,51 @@
       ${liste.length > GOSTER ? `<details class="openiti-devam"><summary>${liste.length - GOSTER} eser daha</summary><ul class="openiti-liste">${liste.slice(GOSTER).map(satir).join('')}</ul></details>` : ''}`;
   }
 
+  function samileBolumu(a) {
+    const s = (window.SAMILE || {})[a.id];
+    if (!s || !s.k.length) return '';
+    const GOSTER = 12;
+    const satir = ([no, ad]) => `<li><a href="https://shamela.ws/book/${no}" target="_blank" rel="noopener"><span class="arapca-kucuk" lang="ar">${esc(ad)}</span></a></li>`;
+    return `<h2 id="samile">Şâmile'deki eserleri</h2>
+      <p class="soluk" style="font-size:.88rem;margin-top:-6px">el-Mektebetü'ş-şâmile'de <a href="https://shamela.ws/author/${s.y}" target="_blank" rel="noopener">bu müellifin sayfasında</a> ${s.k.length} eser bulunuyor. Bağlantılar kitabı Şâmile'de açar.</p>
+      <ul class="samile-liste">${s.k.slice(0, GOSTER).map(satir).join('')}</ul>
+      ${s.k.length > GOSTER ? `<details class="openiti-devam"><summary>${s.k.length - GOSTER} eser daha</summary><ul class="samile-liste">${s.k.slice(GOSTER).map(satir).join('')}</ul></details>` : ''}`;
+  }
+
   function miniAg(a, hocaK, talebeK) {
     const kap = document.getElementById('mini-ag');
     if (!window.cytoscape) { kap.innerHTML = '<p class="bos" style="padding:16px">Ağ kütüphanesi yüklenemedi (internet bağlantısı gerekli).</p>'; return; }
-    const ARALIK = 150;
-    const sira = (liste, y) => liste.map((id, i) => ({ id, x: (i - (liste.length - 1) / 2) * ARALIK, y }));
+    // Her satırda en çok 5 kişi; hocalar yukarıya, talebeler aşağıya doğru satır satır dizilir.
+    // Satırdaki kişi sayısı kutunun genişliğine göre seçilir; böylece ağ küçültülmeden sığar ve isimler okunur kalır.
+    const ARALIK = 190, SATIR_Y = 120;
+    const SATIR = Math.max(2, Math.floor((kap.clientWidth - 40) / ARALIK));
+    const sira = (liste, y0, yon) => liste.map((id, i) => {
+      const s = Math.floor(i / SATIR), satirda = Math.min(SATIR, liste.length - s * SATIR);
+      return { id, x: ((i % SATIR) - (satirda - 1) / 2) * ARALIK, y: y0 + yon * s * SATIR_Y };
+    });
     const hocalar = hocaK.map((k) => k.hoca);
     const talebeler = talebeK.map((k) => k.talebe).filter((t) => !hocalar.includes(t));
     const ikisi = talebeK.map((k) => k.talebe).filter((t) => hocalar.includes(t));
-    const konumlar = [...sira(hocalar, 0), { id: a.id, x: 0, y: 170 }, ...sira(talebeler, 340)];
-    const elemanlar = konumlar.map((k) => ({
-      group: 'nodes',
-      data: { id: k.id, ad: `${alim.get(k.id).isim}\n${alim.get(k.id).v}`, renk: bolgeRengi(alim.get(k.id).b) },
-      position: { x: k.x, y: k.y },
-      classes: k.id === a.id ? 'merkez' : '',
-    }));
+    const konumlar = [...sira(hocalar, -170, -1), { id: a.id, x: 0, y: 0 }, ...sira(talebeler, 170, 1)];
+    const satirSayisi = Math.ceil(hocalar.length / SATIR) + Math.ceil(talebeler.length / SATIR);
+    kap.style.height = Math.min(1000, 220 + satirSayisi * 125) + 'px';
+    const elemanlar = [];
+    konumlar.forEach((k) => {
+      const x = alim.get(k.id);
+      elemanlar.push({
+        group: 'nodes',
+        data: { id: k.id, ad: `${x.isim}\n(ö. ${x.v})`, renk: bolgeRengi(x.b) },
+        position: { x: k.x, y: k.y },
+        classes: k.id === a.id ? 'merkez' : '',
+      });
+      // Düğümün üstünde bölge adı (ayrı, tıklanmayan bir etiket düğümü)
+      elemanlar.push({
+        group: 'nodes',
+        data: { id: 'b-' + k.id, ad: bolge.get(x.b).isim, renk: bolgeRengi(x.b) },
+        position: { x: k.x, y: k.y - (k.id === a.id ? 24 : 19) },
+        classes: 'bolge-etiket', selectable: false,
+      });
+    });
     hocaK.forEach((k) => elemanlar.push({ group: 'edges', data: { id: 'h-' + k.hoca, source: k.hoca, target: a.id }, classes: (k.araci ? 'araci ' : '') + (k.ih ? 'ihtilaf' : '') }));
     talebeK.forEach((k) => { if (!ikisi.includes(k.talebe)) elemanlar.push({ group: 'edges', data: { id: 't-' + k.talebe, source: a.id, target: k.talebe }, classes: (k.araci ? 'araci ' : '') + (k.ih ? 'ihtilaf' : '') }); });
     ikisi.forEach((id) => elemanlar.push({ group: 'edges', data: { id: 'c-' + id, source: a.id, target: id }, classes: 'araci' }));
@@ -510,7 +610,12 @@
       container: kap, elements: elemanlar, layout: { name: 'preset', fit: true, padding: 40 },
       style: grafStili(true), minZoom: 0.3, maxZoom: 2.5, wheelSensitivity: 0.3, autoungrabify: true,
     });
-    cy.on('tap', 'node', (e) => { if (e.target.id() !== a.id) location.hash = '#/alim/' + e.target.id(); });
+    cy.style().selector('node').style({ 'font-size': 13, 'text-max-width': 180, 'text-background-opacity': 0.92, 'text-background-padding': 2, 'text-margin-y': 4 })
+      .selector('node.merkez').style({ 'font-size': 15 })
+      .selector('node.bolge-etiket').style({ width: 1, height: 1, 'background-opacity': 0, 'border-width': 0, 'font-size': 10.5, 'font-weight': 600, color: 'data(renk)', 'text-valign': 'top', 'text-margin-y': 0, 'text-transform': 'uppercase', 'text-background-opacity': 0, events: 'no' })
+      .update();
+    cy.resize(); cy.fit(undefined, 40); if (cy.zoom() > 1.1) { cy.zoom(1.1); cy.center(); }
+    cy.on('tap', 'node', (e) => { if (e.target.id() !== a.id && alim.has(e.target.id())) location.hash = '#/alim/' + e.target.id(); });
     cy.on('mouseover', 'node', () => (kap.style.cursor = 'pointer'));
     cy.on('mouseout', 'node', () => (kap.style.cursor = ''));
     temizle = () => cy.destroy();
@@ -821,17 +926,16 @@
         const ic = kenarlar.filter((k) => alim.get(k.talebe).asir === n);
         return `<section class="asir-bolum" id="asir-${n}">
           <h2>${n}. asır <small>H. ${ASIR_BILGI[n].h} · M. ${ASIR_BILGI[n].m} · ${liste.length} âlim · ${ic.length} hoca-talebe bağı</small></h2>
-          <p>${esc(ASIR_BILGI[n].aciklama)}</p>
-          <p class="kaynaksiz-not">${DERLEME_NOTU}</p>
+          ${metinHtml((BM.asir || {})[n] || ASIR_BILGI[n].aciklama)}
           ${dagilimSeridi(liste)}
           <div class="bolge-satirlari">
             ${bolgeler.map((b) => {
               const bl = liste.filter((a) => a.b === b.id);
               if (!bl.length) return '';
-              const g = (GELISMELER[b.id] || {})[n];
+              const g = gelisme(b.id, n);
               return `<div class="bolge-satiri" style="${renkStil(b)}"><div class="ad"><span class="nokta"></span><a href="#/bolge/${b.id}">${esc(b.isim)}</a></div>
                 <div><div class="isim-cipleri">${bl.map((a) => `<a href="#/alim/${a.id}">${esc(a.isim)} <span>${a.v}</span></a>`).join('')}</div>
-                ${g ? `<details class="gelisme-ac"><summary>Bu asırda ${esc(b.isim)}</summary><p>${esc(g)}</p><p class="kaynaksiz-not">${DERLEME_NOTU}</p></details>` : ''}</div></div>`;
+                ${g ? `<details class="gelisme-ac"><summary>Bu asırda ${esc(b.isim)}</summary>${metinHtml(g)}</details>` : ''}</div></div>`;
             }).join('')}
           </div>
         </section>`;
@@ -880,19 +984,21 @@
       <p class="ust-baslik"><a href="#/bolgeler">Bölgeler</a></p>
       <h1 style="${renkStil(b)};display:flex;align-items:center;gap:10px"><span class="nokta" style="width:14px;height:14px"></span>${esc(b.isim)}</h1>
       <p class="soluk">${esc(b.sehirler)}</p>
-      <p class="ozet-metin" style="max-width:52rem">${esc(b.aciklama)}</p>
-      <p class="kaynaksiz-not">Bölge tanıtımı ve aşağıdaki asır metinleri atlastaki biyografilerden derlenmiştir, ayrıca kaynakla kontrol edilmemiştir. Kaynaklar için âlimlerin kendi sayfalarına bakınız.</p>
+      <div style="max-width:52rem">${metinHtml((BM.tanitim || {})[b.id] || b.aciklama, 'ozet-metin')}</div>
+      ${(BM.ilk || {})[b.id] ? `<h2>İlk üç asır (1.–3. asır)</h2>
+        <p class="soluk" style="font-size:.88rem;margin-top:-6px">Atlasın başladığı 4. asırdan önceki dönem. Burada adı geçen âlimler atlasa dahil değildir.</p>
+        <div class="ilk-asirlar" style="max-width:52rem">${[].concat((BM.ilk || {})[b.id]).map((x) => metinHtml(x)).join('')}</div>` : ''}
       <p><a class="dugme" href="#/ag" id="ag-bolgeye">Ağda bu bölgeye odaklan</a> <a class="dugme" href="#/alimler?bolge=${b.id}">Âlim listesi</a></p>
       <h2>Asır asır</h2>
       <div class="zaman-cizelgesi" style="${renkStil(b)}">
       ${ASIRLAR.map((n) => {
         const al = liste.filter((a) => a.asir === n);
-        const g = (GELISMELER[b.id] || {})[n];
+        const g = gelisme(b.id, n);
         return `<section class="zc-asir" id="bolge-asir-${n}">
           <div class="zc-isaret"><span>${n}.</span></div>
           <div class="zc-govde">
             <h3>${n}. asır <small class="soluk">H. ${ASIR_BILGI[n].h} · M. ${ASIR_BILGI[n].m}${al.length ? ` · ${al.length} âlim` : ''}</small></h3>
-            ${g ? `<p class="gelisme">${esc(g)}</p><p class="kaynaksiz-not">${DERLEME_NOTU}</p>` : ''}
+            ${g ? metinHtml(g, 'gelisme') : ''}
             ${al.length ? `<div class="izgara">${al.map(alimKarti).join('')}</div>` : '<p class="bos">Atlasta bu asırdan bu bölgeye ait âlim yok.</p>'}
           </div>
         </section>`;
@@ -939,17 +1045,17 @@
         <li><b>"Hayatı" paragrafları:</b> yalnızca kaynak metinlerinden (DİA maddesi, Süyûtî, Zehebî, İbn Hacer, Sehâvî) alınan bilgilerle yazılmıştır. Her paragrafın sonunda dayandığı kaynak bağlantısıyla gösterilir.</li>
         <li><b>Kısa özet:</b> yalnızca kaynaklı paragraflarda geçen bilgilerden kurulmuştur; sonunda dayandığı kaynak gösterilir.</li>
         <li><b>"Başlıca eserleri" listesi:</b> atlasın kendi derlemesidir, tek tek kaynakla eşleştirilmemiştir.</li>
-        <li><b>Hoca-talebe bağları:</b> kendi kaynağı olan bağlarda kaynak yazılıdır; olmayanlar "kontrol bekliyor" notuyla işaretlidir.</li>
-        <li><b>Bölge tanıtımları ve asır asır gelişmeler:</b> atlastaki biyografilerden derlenmiştir, ayrıca kaynakla kontrol edilmemiştir.</li>
+        <li><b>Hoca-talebe bağları:</b> her bağın altında kaynağı yazılıdır. Bağların çoğu DİA maddelerinin "ilişkili maddeler" sayfalarındaki <i>Hocası</i> / <i>Öğrencisi</i> kayıtlarından ve madde metinlerinden alınmıştır. DİA'nın bu etiketleri bazen ters düştüğü için (ör. bir talebenin "hocası" diye etiketlenmesi), hocanın talebeden önce vefat etmediği ilişkiler alınmamıştır. Kaynağı bulunamayan bağlar "kontrol bekliyor" notuyla işaretlidir.</li>
+        <li><b>Atlasta bulunmayan hoca ve talebeler:</b> DİA'nın ilişkili maddeler kayıtlarından alınmıştır; her isim kendi DİA maddesine bağlanır, vefat yılı o maddeden alınmıştır.</li>
+        <li><b>Şâmile'deki eserleri:</b> el-Mektebetü'ş-şâmile'deki müellif sayfasından alınmıştır. Müellif sayfası, âlimin OpenITI'deki eserlerinin Şâmile nüshalarından ya da Şâmile'nin müellif dizininden bulunmuştur.</li>
+        <li><b>Bölge tanıtımları, ilk üç asır, asır asır gelişmeler ve asır açıklamaları:</b> her metnin altında dayandığı DİA maddeleri (şehir, bölge ya da âlim maddeleri) ve bilgileri kullanılan âlimlerin kaynaklı biyografileri gösterilir. Kaynakta bulunamayan bilgiler metinlere alınmamıştır.</li>
       </ul>
       <h2>Kaynak durumu</h2>
       <div class="uyari-serit">
         ${alimler.length} âlimin ${alimler.filter((a) => (KAYNAKLAR[a.id] || []).length).length} tanesinin biyografisi kaynaklara bağlanmıştır; ${alimler.filter((a) => a.bioP).length} âlim için paragraf paragraf kaynaklı biyografi vardır.
-        Toplam ${kenarlar.length} hoca-talebe bağının ${kaynakli} tanesinde bağın kendi kaynağı gösterilmiştir. Kaynağı ayrıca gösterilmeyen bağlar, âlimin biyografi kaynaklarına (DİA ve tabakāt) dayanır; bunlar sonraki çalışmalarda tek tek kontrol edilmelidir.
-        ${kontrollu.length ? `Zehebî ve İbn Râfi' kayıtlarındaki bağlar bu klasördeki araştırma dosyalarından Şâmile atıflarıyla alınmıştır.` : ''}
+        Toplam ${kenarlar.length} hoca-talebe bağının ${kaynakli} tanesinde kaynak gösterilmiştir. Kaynağı bulunamayan ${kenarlar.length - kaynakli} bağ sayfalarda "kontrol bekliyor" notuyla işaretlidir.
+        Atlasta bulunmayan ${[...disHoca.values()].reduce((s, l) => s + l.length, 0)} hoca ve ${[...disTalebe.values()].reduce((s, l) => s + l.length, 0)} talebe kaydı DİA maddelerine bağlanmıştır; ${Object.keys(window.SAMILE || {}).length} âlimin eserleri Şâmile'ye bağlanmıştır.
       </div>
-      <h2>Veriyi düzenlemek</h2>
-      <p>Temel kayıtlar <code>veri/alimler.js</code>, ek bağlar <code>veri/biyografiler.js</code>, kaynaklı biyografi paragrafları <code>veri/kaynakli-biyografiler.js</code>, bölgeler <code>veri/bolgeler.js</code>, bölgelerin asır asır gelişmeleri <code>veri/gelismeler.js</code> dosyasındadır. <code>veri/kaynaklar.js</code> ve <code>veri/openiti.js</code> betikle üretilmiştir. Yeni âlim eklemek için dosyadaki bir kaydı örnek alın. Olmayan bir kişiye ya da bölgeye bağ verilirse tarayıcı konsolunda hata gösterilir.</p>
       ${hatalar.length ? `<div class="uyari-serit"><b>Veri hataları:</b><br>${hatalar.map(esc).join('<br>')}</div>` : ''}
     </div>`;
     return 'Yöntem ve veri';

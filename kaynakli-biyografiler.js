@@ -339,7 +339,7 @@ window.BIYOK = {};
   ];
   K['ibn-rafi'] = [
     ["Zilkade ya da Zilhicce 704'te (1305) Kahire'de doğdu. Babası hadis ve kıraat âlimi, annesi Hatice bint Ali el-Halebiyye hadis rivayet eden bir hanımdı. Babası onun için Dimyâtî'den icazet aldı ve 714'te onu Şam'a götürüp Mizzî'ye Tehzîbü'l-Kemâl'i okurken dinletti.", 'dia'],
-    ["Hadis ilminde Kahire'de Kutbüddin el-Halebî ve İbn Seyyidinnâs'ın, Şam'da Mizzî, Birzâlî ve Zehebî'nin yanında yetişti; Takıyyüddin es-Sübkî'nin himayesinde Dımaşk'a yerleşti. Zehebî, Hüseynî, Zeynüddin el-Irâkī, İbnü'l-Cezerî ve İbn Hiccî ondan dinledi.", 'kay'],
+    ["Babasının vefatından sonra Mısır'da Kutbüddin el-Halebî ve İbn Seyyidinnâs'ın derslerine katıldı; Birzâlî, Zehebî ve Mizzî'den istifade etti, Dımaşk'ta Kādılkudât Takıyyüddin es-Sübkî'den faydalandı. Tanınmış talebeleri arasında Hüseynî, Tâceddin es-Sübkî, Zeynüddin el-Irâkī, Heysemî, İbn Hiccî ve İbnü'l-Cezerî vardır; küçük yaştaki İbn Hacer'e icazet verdi. Hocası Zehebî de ondan hadis rivayet etti.", 'dia'],
     ["Süyûtî, dört ciltlik Mu'cem'inin son derece zabtlı ve faydalarla dolu olduğunu, İbnü'n-Neccâr'ın Bağdat tarihine de zeyl yazdığını söyler. 18 Cemâziyelevvel 774'te vefat etti.", 'suy'],
   ];
   K['ibn-receb'] = [
@@ -620,7 +620,7 @@ window.BIYOK = {};
   K['zehebi'] = [
     ["3 Rebîülâhir 673'te (1274) Dımaşk'ın sayfiye köylerinden Kefrebatnâ'da doğdu. Türkmen asıllı ailesi Diyarbekir'e bağlı Meyyâfârikīn'de (Silvan) yaşamıştı; bu yüzden kendini Fârikī nisbesiyle de kaydetmiştir. Önceleri İbnü'z-Zehebî diye bilindi.", 'dia'],
     ["Süyûtî'ye göre on sekiz yaşında hadis talebine başladı, çok rıhle yaptı ve yedi kıraati okudu. İbn Hacer zemzem içerken Zehebî'nin hıfz mertebesine ulaşmayı dilediğini söyler. Ümmü's-Sâlih Türbesi'nde hadis okuttu. Târîhu'l-İslâm, Siyer, Tabakātü'l-huffâz, el-Kâşif ve el-Mîzân eserlerindendir.", 'suy'],
-    ["Birzâlî, Mizzî ve İbn Teymiyye hem hocası hem arkadaşıydı; Birzâlî ona hadis talebini sevdirdi. Hocalarının sayısı 1200'ü aşar. Tâceddin es-Sübkî, Safedî, Hüseynî, İbn Râfi', İbn Kesîr, Alâî ve İbn Receb talebelerindendir.", 'kay'],
+    ["Hadise yönelmesinde Alemüddin el-Birzâlî'nin, onun yazısını muhaddislerin yazısına benzeterek övmesi etkili oldu. Zehebî'den faydalanan tanınmış âlimler arasında Tâceddin es-Sübkî, hocası Birzâlî, İbn Kesîr, İbn Râfi' ve İbn Receb vardır.", 'dia'],
   ];
   K['zekeriyya-ensari'] = [
     ["Çağdaşı İbn İyâs ve talebesi İbnü'l-Hımsî'ye göre 824'te (1421) Süneyke'de doğdu (Gazzî 823, Sehâvî 826 der); sahâbî Hubâb b. Münzir'in soyundandır. Babasının ölümü üzerine annesi onu 841'de Kahire'ye gönderdi; Ezher'de okudu ve temel metinleri ezberledi. Maddî sıkıntı çektiği için bir zenginin desteğiyle okudu. İbn Hacer, Kāyâtî, Sâlih el-Bulkīnî ve İbnü'l-Hümâm hocalarındandır.", 'dia'],

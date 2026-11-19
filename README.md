@@ -10,9 +10,10 @@
 |---|---|
 | **165 âlim** | Nesâî'den (ö. 303) Muhammed Tâhir el-Fettenî'ye (ö. 986); hepsinin biyografisi kaynaklı; 30'u Süyûtî'nin *Tabakātü'l-huffâz*'ından seçilerek eklendi |
 | **Genişletilmiş biyografiler** | TDV İslâm Ansiklopedisi maddeleri ile Süyûtî, Zehebî (*Siyer*), İbn Hacer (*ed-Dürer*) ve Sehâvî'den (*ed-Dav'*) derlendi |
-| **279 hoca-talebe bağı** | 143'ünde bağın kendi kaynağı (çoğu Şâmile sayfasıyla) gösterilir |
-| **OpenITI eserleri** | Her müellifin OpenITI 2025.1.9 külliyatındaki eserleri, depo bağlantılarıyla |
-| **11 bölge × 7 asır** | Her bölgenin asır asır hadis faaliyeti |
+| **332 hoca-talebe bağı** | 323'ünde kaynak gösterilir (DİA maddeleri, Süyûtî, Zehebî, İbn Hacer); kaynağı bulunamayan 9 bağ "kontrol bekliyor" olarak işaretli |
+| **Atlas dışı hoca ve talebeler** | DİA'nın "ilişkili maddeler" kayıtlarından; her isim kendi DİA maddesine bağlı |
+| **OpenITI ve Şâmile eserleri** | Her müellifin OpenITI 2025.1.9 külliyatındaki eserleri ve Şâmile'deki kitapları, doğrudan bağlantılarıyla |
+| **11 bölge × 7 asır** | Her bölgenin ilk üç asrı ve 4.–10. asırlardaki hadis faaliyeti; her metin kaynağıyla |
 
 ## Sayfalar
 
@@ -38,7 +39,10 @@ GitHub Pages'te yayımlamak için klasörün içeriğini bir depoya yükleyip *S
 | `veri/kaynakli-biyografiler.js` | Sitede gösterilen biyografiler: her paragraf `[metin, 'dia+suy']` biçiminde, dayandığı kaynak anahtarıyla (dia, suy, siyer, durer, dav, kay). |
 | `veri/kaynakli-ozetler.js` | Âlimlerin kısa özetleri; yalnız kaynaklı paragraflardaki bilgilerden kuruldu, her biri kaynak anahtarıyla. |
 | `veri/bolgeler.js` | Bölgeler, renkleri ve ağdaki sütun sırası (batıdan doğuya). |
-| `veri/gelismeler.js` | Her bölgenin 4.–10. asırlardaki hadis faaliyeti. |
+| `veri/bolge-metinleri.js` | Bölge tanıtımları, ilk üç asır, asır asır gelişmeler ve asır açıklamaları; her metin `{ m, k }` biçiminde, `k` kaynak listesi (`dia:slug\|Madde` ya da `alim:id`). |
+| `veri/dia-iliskiler.js` | *(betikle üretildi)* DİA "ilişkili maddeler" sayfalarındaki Hocası / Öğrencisi kayıtları ve kişilerin DİA'daki vefat yılları. |
+| `veri/bag-kaynaklari.js` | Kaynağı DİA ya da tabakāt metninde tek tek bulunan bağların kaynak eşleştirmesi. |
+| `veri/samile-eserler.js` | *(betikle üretildi)* Müelliflerin Şâmile'deki kitapları (shamela.ws müellif sayfalarından). |
 | `veri/kaynaklar.js` | *(betikle üretildi)* DİA maddeleri ve tabakāt kitaplarındaki Şâmile sayfaları. |
 | `veri/openiti.js` | *(betikle üretildi)* OpenITI meta verisinden müelliflerin eserleri. |
 

@@ -466,7 +466,7 @@
       ozet: "Ricâl tenkidinin ve İslâm tarihi yazımının zirvesi; Mîzânü'l-i'tidâl, Siyer ve Târîhu'l-İslâm'ın müellifi. Hocalarının sayısı 1200'ü aşar.",
       eser: ['Mîzânü’l-i‘tidâl fî nakdi’r-ricâl', 'Siyeru a‘lâmi’n-nübelâ', 'Târîhu’l-İslâm', 'Tezkiretü’l-huffâz', 'el-Kâşif', 'Telhîsü’l-Müstedrek'],
       dog: 'kismi',
-      kay: [S('Zehebî araştırması (bu çalışma klasöründe: Zehebi_Arastirma.md)')],
+      kay: [],
       h: [
         { k: 'birzali', not: '"Bana hadis talebini o sevdirdi."', kaynak: SIYER_MUK(36, 33) },
         { k: 'mizzi', not: 'Hem hocası hem arkadaşı; "Onun gibisini görmedim."', kaynak: S('Zehebî, Tezkiretü’l-huffâz, IV, 193–194', 'https://shamela.ws/book/1583/987') },
@@ -526,7 +526,7 @@
       ozet: "Kahire'de doğup Dımaşk'a yerleşen hâfız; Birzâlî'nin tarihine yazdığı el-Vefeyât zeyli ve binden fazla hocayı kapsayan Mu'cem'iyle tanınır.",
       eser: ['el-Vefeyât', 'Mu‘cemü’ş-şüyûh', 'ez-Zeyl alâ Târîhi Bağdâd', 'Zeylü Müştebihi’n-nisbe'],
       dog: 'kismi',
-      kay: [TDV_IBN_RAFI, S("İbn Râfi' araştırması (bu çalışma klasöründe: Ibn_Rafi_es-Sellami_Arastirma.md)")],
+      kay: [TDV_IBN_RAFI],
       h: [
         { k: 'dimyati', not: 'İcazet verdi.', kaynak: S('İbn Hacer, ed-Dürerü’l-kâmine, V, 180', 'https://shamela.ws/book/6674/1740') },
         { k: 'kutbuddin-halebi', not: 'el-Vefeyât\'ta "şeyhimiz" der.', kaynak: VEFEYAT('I', 499, 373) },
