@@ -79,7 +79,7 @@
   const slugAlim = new Map();
   for (const [id, liste] of Object.entries(window.KAYNAK_HAM || {})) for (const k of liste) if (k[0] === 'dia') slugAlim.set(k[1], id);
   const disHoca = new Map(), disTalebe = new Map();
-  const disEkle = (m, id, kayit) => { if (!m.has(id)) m.set(id, []); if (!m.get(id).some((x) => x.slug === kayit.slug)) m.get(id).push(kayit); };
+  const disEkle = (m, id, kayit) => { if (!m.has(id)) m.set(id, []); if (!m.get(id).some((x) => (kayit.slug ? x.slug === kayit.slug : x.ad === kayit.ad))) m.get(id).push(kayit); };
   // DİA'da maddesi olup KAYNAK_HAM'da DİA kaydı bulunmayan atlas âlimleri
   for (const [slug, id] of [['ismaili', 'ismaili'], ['baci', 'baci'], ['ebu-abdurrahman-es-sulemi', 'sulemi']]) slugAlim.set(slug, id);
   // DİA'nın ilişki etiketleri otomatik üretildiği için bazen ters düşer (ör. talebe "Hocası" diye etiketlenir).
@@ -97,6 +97,26 @@
         const [h, t] = yon === 'h' ? [karsi, id] : [id, karsi];
         bagEkle(t, { k: h, kaynak: diaKaynak(id) });
       } else disEkle(yon === 'h' ? disHoca : disTalebe, id, { slug, ad, tanitim, v, kaynak: diaKaynak(id) });
+    }
+  }
+  // Kaynaklı biyografilerde adı geçen, atlasta ve DİA ilişkilerinde bulunmayan hoca/talebeler (veri/dis-kisiler.js)
+  {
+    const sadeAd = (s) => String(s || '').toLocaleLowerCase('tr').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[‘’'`ʿʾ]/g, '').replace(/ı/g, 'i');
+    const anahtar = (s) => sadeAd(String(s).split(',')[0]).replace(/^(el|es|en|er|ed|et|ez|eş)-/g, '').replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+    const atlasAnahtar = new Set(alimler.map((a) => anahtar(a.isim)));
+    const SAMILE_TUR = { suy: '/book/5823/', siyer: '/book/10906/', durer: '/book/6674/', dav: '/book/6675/' };
+    for (const [id, liste] of Object.entries(window.DIS_KISI || {})) {
+      if (!alim.has(id)) continue;
+      for (const [ad, yon, kay, slug] of liste) {
+        const m = yon === 'h' ? disHoca : disTalebe;
+        const mevcut = m.get(id) || [];
+        const k = anahtar(ad);
+        if (atlasAnahtar.has(k) || mevcut.some((x) => (slug && x.slug === slug) || anahtar(x.ad) === k || anahtar(baslikDuzelt(x.ad)) === k)) continue;
+        const turler = kay.split('+');
+        const samile = turler.map((t) => SAMILE_TUR[t] && (KAYNAKLAR[id] || []).find((x) => x.url && x.url.includes(SAMILE_TUR[t]))).find(Boolean);
+        const kaynak = samile || (turler.includes('dia') ? diaKaynak(id) : null) || (KAYNAKLAR[id] || [])[0];
+        disEkle(m, id, { slug: slug || null, ad, url: slug ? null : samile?.url, kaynak, yerel: true });
+      }
     }
   }
   if (diaElenen.length) console.info('Tarihle uyuşmadığı için alınmayan DİA ilişkileri:\n' + diaElenen.join('\n'));
@@ -461,7 +481,8 @@
           : x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" title="Şâmile'deki kaynak">${ad}</a>` : ad;
         return `<li>${link}${x.v ? ` <span class="soluk">(ö. ${x.v})</span>` : ''}${x.tanitim ? ` <span class="soluk">${esc(x.tanitim)}</span>` : ''}</li>`;
       }).join('')}</ul>
-      <p class="kaynak">Kaynak: ${kaynaklar.map(kaynakYaz).join('; ')} (ilişkili maddeler). Bağlantılar kişinin DİA maddesini açar; bu kişiler atlasta bulunmuyor.</p>`;
+      <p class="kaynak">Kaynak: ${kaynaklar.map(kaynakYaz).join('; ')}.</p>
+      <p class="kaynaksiz-not">Bu kişiler atlasta bulunmuyor. İsmi bağlantılı olanlar kendi DİA maddesini ya da ilişkinin geçtiği Şâmile sayfasını açar.</p>`;
   }
 
   function silsileHtml(id, yon) {
@@ -963,6 +984,14 @@
     main.innerHTML = `
       <h1>Bölgeler</h1>
       <p class="soluk" style="max-width:52rem">İslâm dünyasının hadis merkezleri, batıdan doğuya. Kartlardaki çubuklar 4.–10. asırlarda o bölgede vefat eden âlimlerin sayısını gösterir.</p>
+      <h2>Başlangıç: ilk üç asır</h2>
+      <p class="soluk" style="max-width:52rem;margin-top:-6px">Atlas 4. asırla başlar. Aşağıda her bölgenin 1.–3. asırlardaki hadis birikimi özetlenmiştir; burada adı geçen âlimler atlasa dahil değildir.</p>
+      <div class="ilk-ozet">${bolgeler.filter((b) => (BM.ilk || {})[b.id]).map((b) => `<details class="gelisme-ac" style="${renkStil(b)}">
+        <summary><span class="nokta"></span> ${esc(b.isim)}</summary>
+        ${[].concat(BM.ilk[b.id]).map((x) => metinHtml(x)).join('')}
+        <p><a href="#/bolge/${b.id}">${esc(b.isim)} sayfasına git →</a></p>
+      </details>`).join('')}</div>
+      <h2>Bölgeler</h2>
       <div class="izgara">${bolgeler.map(bolgeKarti).join('')}</div>
       <h2>Bölgeler arası ilim akışı</h2>
       <p class="soluk">Her hücre, satırdaki bölgede yaşamış bir hocadan sütundaki bölgede yaşamış bir talebeye giden bağ sayısıdır. Köşegen, bölge içi aktarımdır.</p>

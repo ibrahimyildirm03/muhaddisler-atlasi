@@ -152,6 +152,47 @@ kbd { font-family: var(--sans); font-size: 0.75rem; border: 1px solid var(--cizg
   .alt-menu a[aria-current='page'] { color: var(--vurgu); }
 }
 
+/* ── Uygulama modu (ana ekrandan açıldığında) ve yükleme düğmesi ── */
+.geri { display: none; }
+.yukle {
+  display: inline-flex; align-items: center; gap: 6px; background: var(--vurgu); color: var(--kart); border: 0;
+  border-radius: 8px; padding: 7px 11px; font-weight: 600; font-size: 0.85rem; cursor: pointer; white-space: nowrap;
+}
+.yukle[hidden] { display: none; }
+@media (max-width: 760px) { .yukle span { display: none; } .yukle { padding: 8px; } }
+.yukle-pencere {
+  border: 1px solid var(--cizgi); border-radius: 14px; background: var(--kart); color: var(--murekkep);
+  max-width: min(420px, calc(100vw - 32px)); padding: 18px 20px;
+}
+.yukle-pencere::backdrop { background: rgb(0 0 0 / 0.45); }
+.yukle-pencere h2 { margin: 0 0 8px; font-size: 1.15rem; }
+
+html.uygulama, html.uygulama body { overscroll-behavior-y: none; }
+html.uygulama { -webkit-tap-highlight-color: transparent; }
+html.uygulama .ust {
+  height: calc(var(--ust-yukseklik) + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+}
+html.uygulama .geri:not([hidden]) {
+  display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: var(--murekkep);
+  padding: 6px; margin-left: -6px; border-radius: 8px; cursor: pointer;
+}
+html.uygulama .geri:active { background: var(--kagit-2); }
+html.uygulama .alt { display: none; }
+html.uygulama .ust-menu a, html.uygulama .alt-menu a, html.uygulama .dugme, html.uygulama button { -webkit-user-select: none; user-select: none; }
+html.uygulama .alt-menu a:active { background: var(--kagit-2); }
+@media (max-width: 760px) {
+  html.uygulama .logo span { display: inline; font-size: 1rem; }
+  html.uygulama .ara-tetik { flex: none; width: 40px; height: 38px; padding: 0; justify-content: center; margin-left: auto; }
+  html.uygulama .ara-tetik svg { flex: none; }
+  html.uygulama .ara-tetik .ara-metin { display: none; }
+  html.uygulama body { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+  html.uygulama main { padding-top: 18px; }
+}
+html.uygulama main { animation: sayfa-gir 0.18s ease-out; }
+@keyframes sayfa-gir { from { opacity: 0.4; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { html.uygulama main { animation: none; } }
+
 main { padding-top: 32px; padding-bottom: 32px; min-height: 60vh; }
 .alt { border-top: 1px solid var(--cizgi); color: var(--murekkep-2); font-size: 0.85rem; padding-top: 12px; padding-bottom: 24px; }
 
@@ -321,6 +362,11 @@ details.nasil > div { position: absolute; z-index: 5; right: 20px; max-width: 42
 .p-kaynak a { color: inherit; }
 .kaynaksiz-not { font-family: var(--sans); font-size: 0.78rem; color: var(--murekkep-2); font-style: italic; }
 .kaynak-liste li { margin: 4px 0; }
+.ilk-ozet { display: grid; gap: 6px; max-width: 52rem; margin-bottom: 8px; }
+.ilk-ozet details { border: 1px solid var(--cizgi); border-radius: 10px; padding: 6px 14px; background: var(--kart); }
+.ilk-ozet summary { font-size: 0.95rem; font-weight: 600; color: var(--murekkep); display: flex; align-items: center; gap: 8px; }
+.ilk-ozet .nokta { width: 10px; height: 10px; border-radius: 50%; background: var(--renk); display: inline-block; }
+.ilk-ozet p { font-size: 0.92rem; color: var(--murekkep); }
 .dis-baslik { margin: 18px 0 6px; font-size: 0.9rem; font-weight: 600; color: var(--murekkep-2); }
 .dis-liste { list-style: none; padding: 0; margin: 0; display: grid; gap: 5px; font-size: 0.9rem; }
 .dis-liste .soluk { font-size: 0.8rem; }

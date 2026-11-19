@@ -1,0 +1,25 @@
+{
+  "name": "Muhaddisler Atlası",
+  "short_name": "Muhaddisler",
+  "description": "Hicrî 4.–10. asır hadis âlimleri; bölgelerine ve asırlarına göre, hoca-talebe bağlarıyla.",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f5f7",
+  "theme_color": "#141c2b",
+  "categories": ["education", "books", "reference"],
+  "shortcuts": [
+    { "name": "Âlimler", "url": "./#/alimler", "icons": [{ "src": "ikon-192.png", "sizes": "192x192" }] },
+    { "name": "Asırlar", "url": "./#/asirlar", "icons": [{ "src": "ikon-192.png", "sizes": "192x192" }] },
+    { "name": "Bölgeler", "url": "./#/bolgeler", "icons": [{ "src": "ikon-192.png", "sizes": "192x192" }] },
+    { "name": "Bağlantı ağı", "url": "./#/ag", "icons": [{ "src": "ikon-192.png", "sizes": "192x192" }] }
+  ],
+  "icons": [
+    { "src": "ikon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "ikon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "ikon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

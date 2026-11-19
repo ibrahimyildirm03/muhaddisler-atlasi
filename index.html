@@ -8,6 +8,12 @@
     <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0e1219" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="ikon.svg" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Muhaddisler" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
@@ -23,6 +29,9 @@
     <a class="atla" href="#icerik">İçeriğe geç</a>
     <header class="ust">
       <div class="kap ust-ic">
+        <button class="geri" type="button" aria-label="Geri" title="Geri" hidden>
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
         <a href="#/" class="logo" aria-label="Muhaddisler Atlası ana sayfa">
           <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
             <circle cx="12" cy="4" r="2.6" fill="currentColor" />
@@ -46,6 +55,10 @@
           <a href="#/ag" data-menu="ag">Bağlantı ağı</a>
         </nav>
 
+        <button class="yukle" type="button" title="Telefona uygulama olarak yükle" hidden>
+          <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          <span>Uygulamayı yükle</span>
+        </button>
         <button class="tema" type="button" aria-label="Açık veya koyu temaya geç" title="Açık / koyu tema">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z" fill="currentColor" /></svg>
         </button>
@@ -104,7 +117,16 @@
     <script src="samile-eserler.js"></script>
     <script src="dia-iliskiler.js"></script>
     <script src="bag-kaynaklari.js"></script>
+    <script src="dis-kisiler.js"></script>
     <script src="bolge-metinleri.js"></script>
     <script src="uygulama.js"></script>
+    <dialog class="yukle-pencere" aria-label="Uygulamayı yükle">
+      <h2>Telefona uygulama olarak yükle</h2>
+      <p class="ios-yol">iPhone ve iPad'de Safari'de alttaki <b>Paylaş</b> düğmesine <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="vertical-align:-2px"><path d="M12 15V4m0 0-4 4m4-4 4 4M6 11v8h12v-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg> dokunun, ardından <b>Ana Ekrana Ekle</b>'yi seçin.</p>
+      <p class="diger-yol">Tarayıcının menüsünden (⋮) <b>Uygulamayı yükle</b> ya da <b>Ana ekrana ekle</b>'yi seçin.</p>
+      <p class="soluk" style="font-size:.88rem">Uygulama ana ekrandaki simgesiyle tam ekran açılır; bir kez açıldıktan sonra internet olmadan da çalışır.</p>
+      <p><button class="dugme ana" type="button" data-kapat>Tamam</button></p>
+    </dialog>
+    <script src="uygulama-modu.js"></script>
   </body>
 </html>
